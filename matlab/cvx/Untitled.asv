@@ -1,0 +1,8 @@
+m = 16;n = 8;
+A = randn(m,1);
+B=[A.^2,A];
+b=A.^2*3+2*A;
+cvx_begin
+    variable x(2,1) y(1) ;
+    minimize( norm(B*x+y - b) )
+cvx_end

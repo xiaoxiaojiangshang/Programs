@@ -1,0 +1,64 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+#读取'SecuCode', 'TradingDay', 'TurnoverRate', 'ClosePrice', 'ChangePCT', 'TotalMV
+import MySQLdb
+from  datetime import datetime
+import time
+
+def common_multi_insert(cur, tablename, fieldnames, dic_list_al):
+    try:
+        index_slice_list = range(0, len(dic_list_al), 10000) #gip=10000
+        if index_slice_list[-1] < len(dic_list_al) - 1: index_slice_list += [len(dic_list_al)]# 保存最后一位
+        for i in range(len(index_slice_list)-1):
+            dic_list = dic_list_al[index_slice_list[i]:index_slice_list[i+1]]  #dic_list save 10000个数据
+            val_arr=[]
+            for dic in dic_list:
+                for field in fieldnames:
+                    val_arr.append(dic[field])
+            one_row_val_sql="("+",".join(["%s"]*len(fieldnames))+")"
+            val_sql=",".join([one_row_val_sql]*len(dic_list))
+            sql="REPLACE INTO {0}({1}) VALUES{2}".format(tablename,",".join(fieldnames), val_sql)
+            # cur = connection.cursor()
+            cur.execute(sql,val_arr)
+        return True
+    except:
+        print u'%s 写数据库失败!'%tablename
+        return  False
+
+def datetime2days(dt):
+    if datetime == type(dt):
+        timeArray = time.strptime("%s" % dt.date(), "%Y-%m-%d")  # %H:%M:%S
+    else:
+        timeArray = time.strptime("%s" % dt, "%Y-%m-%d")
+    days = int((time.mktime(timeArray) + 8 * 60 * 60) / 86400)
+    return days
+
+if __name__ == "__main__":
+
+    # 一下代码为数据读取的示例
+    conn = MySQLdb.connect(host='192.168.1.212', user='dev', passwd='sd61131707', db='jydb1', charset='utf8')
+    cur = conn.cursor()
+    last = None
+    cl_zb_fieldnames = ['SecuCode', 'TradingDay', 'TurnoverRate', 'ClosePrice', 'ChangePCT', 'TotalMV','ChangePCTRW', 'ChangePCTRM','TurnoverRateRW','TurnoverRateRM','TurnoverRateR3M']
+    cur.execute("SELECT %s FROM qt_performance LEFT JOIN secumain ON qt_performance.InnerCode = secumain.InnerCode ORDER BY TradingDay DESC LIMIT 0 ,416347"%(",".join(cl_zb_fieldnames)) )
+    maper_dic = {'SecuCode':'id','TradingDay':'days','TurnoverRate':'turnover_rate','ClosePrice':'close','ChangePCT':'chg','TotalMV':'zsz','ChangePCTRW':'rsum5', 'ChangePCTRM':'rsum20','TurnoverRateRW':'tsum5','TurnoverRateRM':'tsum20','TurnoverRateR3M':'tsum60'}
+    cl_zb_dic_list = []
+    for line in cur.fetchall():
+        line_dict ={}
+        for iline in range(len(line)):
+            if cl_zb_fieldnames[iline]=='TradingDay':
+                value=datetime2days(line[iline])
+            else:
+                value=line[iline]
+            name = cl_zb_fieldnames[iline]
+            line_dict[maper_dic[name]] = value
+        cl_zb_dic_list.append(line_dict)
+    # 一下代码为数据写入到数据库的示例
+    new_cl_zb_fieldnames = []
+    for name in cl_zb_fieldnames:
+        new_cl_zb_fieldnames += [maper_dic[name]]
+    conn = MySQLdb.connect(host='192.168.1.239', user='jgp', passwd='123456', db='com_stock', charset='utf8')
+    cur = conn.cursor()
+    common_multi_insert(cur, "select_stock_filter_2017", new_cl_zb_fieldnames, cl_zb_dic_list)
+    cur.close()
+    conn.close()

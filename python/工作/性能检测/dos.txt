@@ -1,0 +1,14 @@
+安装graphviz-2.38 并将bin路径加入到path ，注意一定要到bin
+在运行的程序中包含郭荣发dot.py 和sd_profile.py
+
+python -m cProfile -o output.pstats test.py
+python gprof2dot.py -f pstats output.pstats | dot -Tpng -o test.png
+
+在程序中运行：
+import sys
+sys.path.append("../profile")   ## 同一路径下可能不需要加，实测可以
+from sd_profile import sd_profile
+
+检测模块上加：@sd_profile('a.prof')
+
+注意路径不要有中文

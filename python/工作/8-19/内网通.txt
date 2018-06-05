@@ -1,0 +1,27 @@
+from ctypes import *  
+import subprocess  
+#输入参数  
+cmd="cmd.exe"  
+print "ip:"  
+ip=raw_input()  
+print "begin:"  
+begin=raw_input()  
+print "end:"  
+end=raw_input()  
+print "start"  
+  
+#循环  
+#python特性1：不符合缩进的不予编译  
+while int(begin)<int(end):  
+    #新建线程  
+    p=subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,  
+    stdin=subprocess.PIPE,  
+    stderr=subprocess.PIPE)  
+    #ping  
+    p.stdin.write("ping "+ip+str(begin)+"\n")  
+    p.stdin.close()  
+    p.wait()  
+    print "execution result:%s" %p.stdout.read()  
+    begin=int(begin)+1  
+  
+print "finish
